@@ -14,7 +14,6 @@
     print "  bn [nids]             Backups Node(s)\n";
     print "  rn [nids]             Restore Node(s)\n";
     print "  lt [url]              List Templates for [page]\n";
-    //print "  es                    Emulate SOLR\n";
     print "  ru [module] [N]       Run Update\n";
     print "  help                  print this HELP.\n";
     print "  generate-config       generates a config file example.\n";
@@ -214,36 +213,6 @@
     }
     print "\n";
   }
-  
-
-  // Emulate solr.
-  // @todo.
-  function mmda_es($args) {
-    if (!function_exists('socket_create')) {
-      print " You need to enable sockets on your php.ini.\n\n";
-      return;
-    }
-    print " Emulating SOLR, hit Ctrl + C to stop.\n\n";
-    set_time_limit (0);
-    $address = 'localhost';
-    $port = 8983;
-    $con = 1;
-    $word = "";
-
-    $sock = socket_create(AF_INET, SOCK_STREAM, 0);
-    $bind = socket_bind($sock, $address, $port);
-    socket_listen($sock);
-    socket_set_nonblock($sock);
-
-    while ($con == 1) {
-      $client = socket_accept($sock);
-      $input = socket_read($client, 1024);
-      socket_write($client, "oi\n");
-      socket_close();
-    }
-    echo $word . "\n";
-    print " Done.\n\n";
-  }
 
   // Return the templates from a page.
   function _mmda_get_templates($page) {
@@ -376,10 +345,6 @@
       else {
         print "Error copying {$source} to {$dest}\n";
       }
-      /*print $template['theme'] . " (" . $template['path'] . ")\n";
-      print " x " . $template['chosen'] . "\n";
-      print " * " . implode("\n * ", $template['suggestions']) . "\n";
-      print "\n";*/
     }
     print "\n";
   }
