@@ -13,6 +13,7 @@
     print "  env [name]            switch ENVironments.\n";
     print "  bn [nids]             Backups Node(s)\n";
     print "  rn [nids]             Restore Node(s)\n";
+    print "  cn [nids]             Clone Node(s)\n";
     print "  lt [url]              List Templates for [page]\n";
     print "  ru [module] [N]       Run Update\n";
     print "  help                  print this HELP.\n";
@@ -209,6 +210,35 @@
       }
       else {
         print " An error ocurred recovering the node.\n";
+      }
+    }
+    print "\n";
+  }
+
+  /**
+   * Clone node.
+   */
+  function mmda_cn($args) {
+    if (!count($args) || $args[0] == 'help') {
+      print " Usage: mmda cn nid \n Ex.: mmda bn 103 104\n\n";
+      return;
+    }
+
+    foreach ($args as $nid) {
+      $node = node_load($nid);
+      if (!$node) {
+        print " Error: Invalid nid '" . $nid . "'\n";
+      }
+      else {
+        $title = $node->title;
+        unset($node->nid);
+        unset($node->uuid);
+        unset($node->vid);
+        unset($node->vuuid);
+        $node->is_new = TRUE;
+        $node->title = 'Clone of ' . $node->title;
+        node_save($node);
+        print "Node '" . $title ."' cloned.\n";
       }
     }
     print "\n";
