@@ -1,5 +1,9 @@
 #!/usr/bin/php
+
 <?php
+
+// Year, month and day.
+define('MMDA_VERSION', 160221);
 {
   $working_directory = getcwd();
 
@@ -16,6 +20,7 @@
     print "  rn [nids]             Restore Node(s)\n";
     print "  cn [nids]             Clone Node(s)\n";
     print "  lt [url]              List Templates for [page]\n";
+    print "  gt [url]              Generate Templates for [page]\n";
     print "  ru [module] [N]       Run Update\n";
     print "  ju [module] [N]       Jump Update (Ignore the update)\n";
     print "  cw [module] [weight]  Change module Weight on system table\n";
@@ -262,7 +267,7 @@
    */
   function mmda_cn($args) {
     if (!count($args) || $args[0] == 'help') {
-      print " Usage: mmda cn nid \n Ex.: mmda bn 103 104\n\n";
+      print " Usage: mmda cn nid \n Ex.: mmda cn 103 104\n\n";
       return;
     }
 
@@ -390,8 +395,13 @@
 
     foreach ($templates as $template) {
       print $template['theme'] . " (" . $template['path'] . ")\n";
-      print " x " . $template['chosen'] . "\n";
-      print " * " . implode("\n * ", $template['suggestions']) . "\n";
+      if (!isset($template['chosen']) && !isset($template['suggestions'])) {
+        print " -- there are no template suggestions for this theme call.\n";
+      }
+      else {
+        print " x " . $template['chosen'] . "\n";
+        print " * " . implode("\n * ", $template['suggestions']) . "\n";
+      }
       print "\n";
     }
     print "\n";
@@ -431,7 +441,7 @@
       print " true, the script will try to change this to one if you are in a\n";
       print " drupal folder or subfolder, keep in mind the url should correponds\n";
       print " to a url for the folder you are on right now.\n\n";
-      print " The template will be copied to your active theme folder.";
+      print " The templates will be copied to your active theme folder.";
       return;
     }
 
