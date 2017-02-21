@@ -11,11 +11,14 @@
     print " Usage:\n";
     print "  status                print some STATUS information\n";
     print "  env [name]            switch ENVironments.\n";
+    print "  dmm [name]            Delete Missing Module from system.\n";
     print "  bn [nids]             Backups Node(s)\n";
     print "  rn [nids]             Restore Node(s)\n";
     print "  cn [nids]             Clone Node(s)\n";
     print "  lt [url]              List Templates for [page]\n";
     print "  ru [module] [N]       Run Update\n";
+    print "  ju [module] [N]       Jump Update (Ignore the update)\n";
+    print "  cw [module] [weight]  Change module Weight on system table\n";
     print "  help                  print this HELP.\n";
     print "  generate-config       generates a config file example.\n";
   }
@@ -156,13 +159,52 @@
     module_load_include('install', $module);
     if (function_exists($hook)) {
       $hook();
+      cache_clear_all();
       print "Update {$hook} run on {$module}. \n\n";
     }
     else {
       print " Error: This hook_update doesn't exists. \n\n";
     }
   }
-  
+
+  /**
+   * Jump update. Just update the system table.
+   */
+  function mmda_ju($args) {
+    if (!count($args)) {
+      print " Usage : 'mmda ju hook_update_n' or 'mmda ju module_name N' \n Ex.: 'mmda ju my_module_update_7032' or 'mmda ju my_module 7032' \n\n";
+      return;
+    }
+
+    if (count($args) > 1) {
+      $module = $args[0];
+      $version = $args[1];
+    }
+    else {
+      $hook = reset($args);
+      $module = explode('_update_', $hook)[0];
+      $version = explode('_update_', $hook)[1];
+    }
+
+    $hook = $module . '_update_' . $version;
+
+    if (!module_exists($module)) {
+      print " Error: " . $module . " doesn't exists or is not enabled. \n\n";
+      return;
+    }
+
+    module_load_include('install', $module);
+    if (function_exists($hook)) {
+      require_once DRUPAL_ROOT . '/includes/install.inc';
+      $new_version = (int) $version + 1;
+      drupal_set_installed_schema_version($module, $new_version);
+      print "Schema version for {$module} set to {$new_version}. \n\n";
+    }
+    else {
+      print " Error: This hook_update doesn't exists. \n\n";
+    }
+  }
+
   /**
    * Backups nodes.
    */
@@ -314,6 +356,24 @@
     variable_set('theme_debug', $initial_value);
     return $templates;
   }
+
+  function mmda_dmm($args) {
+    if (!count($args) || $args[0] == 'help') {
+      print " Usage: mmda dmm module \n Ex.: mmda dmm my_custom_module \n\n";
+      print " It's advised to not do that with contrib modules, instead of it, \n";
+      print " download the module and uninstall.\n";
+      return;
+    }
+    if (!db_delete('system')->condition('name', $args[0])->execute()) {
+      print " Error deleting $args[0] from system, make sure the module name \n";
+      print " is correct.\n";
+    }
+    else {
+      print " $args[0] deleted from system.\n";
+      cache_clear_all();
+    }
+    print "\n";
+  }
   
   // List templates.
   function mmda_lt($args) {
@@ -336,6 +396,32 @@
     }
     print "\n";
     
+  }
+
+  // Change module weight.
+  function mmda_cw($args) {
+    if (count($args) < 2 || $args[0] == 'help') {
+      print " Usage: mmda cw [module] [weight]\n Ex.: mmda cw my_module 1 \n\n";
+      print " This will set the module weight, the weight defines the order\n";
+      print " the hooks are called, except if there is a hook_implements_alter.";
+      return;
+    }
+
+    $result = db_update('system')
+      ->condition('name', $args[0])
+      ->fields(array(
+        'weight' => $args[1],
+      ))
+      ->execute();
+
+    if (!$result) {
+      print " An error ocurred updating the module weight, check the module\n";
+      print " machine name.\n";
+    }
+    else {
+      print " Updating {$args[0]} weight to {$args[1]}\n";
+    }
+    print "\n";
   }
 
   function mmda_gt($args) {
